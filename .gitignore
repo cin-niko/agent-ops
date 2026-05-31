@@ -1,0 +1,10 @@
+# External plugins are git submodules — tracked as pointers, not content
+
+# Your own authored content — keep it
+!skills/
+!mcp/
+!configs/
+
+# OS
+.DS_Store
+Thumbs.db

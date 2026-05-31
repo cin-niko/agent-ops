@@ -1,0 +1,12 @@
+[submodule "plugins/superpowers"]
+	path = plugins/superpowers
+	url = https://github.com/obra/superpowers.git
+[submodule "plugins/gitnexus"]
+	path = plugins/gitnexus
+	url = https://github.com/abhigyanpatwari/GitNexus.git
+[submodule "plugins/context7"]
+	path = plugins/context7
+	url = https://github.com/upstash/context7.git
+[submodule "plugins/ui-ux-pro-max"]
+	path = plugins/ui-ux-pro-max
+	url = https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git
