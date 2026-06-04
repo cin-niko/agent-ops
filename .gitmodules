@@ -10,3 +10,6 @@
 [submodule "plugins/ui-ux-pro-max"]
 	path = plugins/ui-ux-pro-max
 	url = https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git
+[submodule "plugins/andrej-karpathy-skills"]
+	path = plugins/andrej-karpathy-skills
+	url = https://github.com/multica-ai/andrej-karpathy-skills.git

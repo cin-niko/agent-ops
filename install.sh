@@ -8,7 +8,7 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AI_PLATFORMS=(claudecode codex cursor)
 SELECTED_PLATFORMS=()
 SELECTED_TOOLS=()
-TOOLS=(superpowers gitnexus context7 ui-ux-pro-max)
+TOOLS=(superpowers gitnexus context7 ui-ux-pro-max andrej-karpathy-skills)
 
 # Collects steps the user must do by hand after the script finishes
 MANUAL_STEPS=()
@@ -89,15 +89,42 @@ confirm() {
 
 has_platform() { printf '%s\n' "${SELECTED_PLATFORMS[@]}" | grep -qx "$1"; }
 
+normalize_skill_name() {
+  local skill_file="$1"
+  local skill_name="$2"
+
+  if [[ ! -f "$skill_file" ]]; then
+    log_warn "Skill file not found at $skill_file"
+    return 1
+  fi
+
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$skill_file" "$skill_name" <<'PYEOF'
+import re
+import sys
+
+path, skill_name = sys.argv[1], sys.argv[2]
+with open(path) as f:
+    content = f.read()
+
+content = re.sub(r"(?m)^name: .*$", f"name: {skill_name}", content, count=1)
+
+with open(path, "w") as f:
+    f.write(content)
+PYEOF
+  else
+    log_warn "python3 not found — leaving $skill_file name unchanged"
+  fi
+}
+
 # =========================
 # Submodule bootstrap
 # =========================
 
 ensure_submodules() {
-  if [[ ! -f "$REPO_DIR/plugins/superpowers/README.md" ]]; then
-    log_do "Initializing submodules (first run)..."
-    git -C "$REPO_DIR" submodule update --init --recursive
-  fi
+  log_do "Ensuring submodules are initialized..."
+  git -C "$REPO_DIR" submodule update --init --recursive
+  log_ok "Submodules ready"
 }
 
 update_submodules() {
@@ -214,9 +241,8 @@ install_superpowers() {
   if has_platform codex; then
     deploy_submodule superpowers "$HOME/.codex/skills/superpowers"
     if command -v codex >/dev/null 2>&1; then
-      log_do "codex: adding marketplace + plugin"
-      codex plugin marketplace add https://github.com/obra/superpowers-marketplace 2>/dev/null || true
-      codex plugin add superpowers@superpowers-marketplace 2>/dev/null || true
+      log_do "codex: enabling official plugin"
+      codex plugin add superpowers@openai-curated 2>/dev/null || true
       log_ok "codex: plugin registered"
     else
       log_skip "codex: codex not installed — skipping plugin registration"
@@ -385,7 +411,55 @@ install_ui_ux_promax() {
     log_do "cursor: copying skill to $dest"
     mkdir -p "$dest" && cp -r "$src/." "$dest/"
     log_ok "cursor: skill deployed to ~/.cursor/skills/ui-ux-pro-max"
-    need_manual "ui-ux-pro-max" "cursor" "In Cursor Agent chat: /add-plugin ui-ux-pro-max"
+    need_manual "ui-ux-pro-max" "cursor" "Restart Cursor to reload the ui-ux-pro-max skill."
+  fi
+}
+
+# =========================
+# andrej-karpathy-skills
+# =========================
+
+install_andrej_karpathy_skills() {
+  banner "andrej-karpathy-skills"
+
+  local src="$REPO_DIR/plugins/andrej-karpathy-skills"
+  local skill_src="$src/skills/karpathy-guidelines"
+
+  if [[ ! -d "$skill_src" ]]; then
+    log_warn "Source not found at $skill_src — submodule may not be initialized"
+    return 1
+  fi
+
+  if has_platform claudecode; then
+    local dest="$HOME/.claude/skills/andrej-karpathy-skills"
+    log_do "claudecode: copying skill to $dest"
+    mkdir -p "$dest" && cp -r "$skill_src/." "$dest/"
+    normalize_skill_name "$dest/SKILL.md" "andrej-karpathy-skills"
+    log_ok "claudecode: skill deployed"
+    if command -v claude >/dev/null 2>&1; then
+      log_do "claudecode: registering via plugin marketplace"
+      claude plugin marketplace add forrestchang/andrej-karpathy-skills 2>/dev/null || true
+      claude plugin install andrej-karpathy-skills@karpathy-skills 2>/dev/null || true
+      log_ok "claudecode: plugin registration attempted"
+    else
+      log_skip "claudecode: claude not installed — skipping plugin registration"
+    fi
+  fi
+
+  if has_platform codex; then
+    local dest="$HOME/.codex/skills/andrej-karpathy-skills"
+    log_do "codex: copying skill to $dest"
+    mkdir -p "$dest" && cp -r "$skill_src/." "$dest/"
+    normalize_skill_name "$dest/SKILL.md" "andrej-karpathy-skills"
+    log_ok "codex: skill deployed"
+  fi
+
+  if has_platform cursor; then
+    local skill_dest="$HOME/.cursor/skills/andrej-karpathy-skills"
+    log_do "cursor: copying skill to $skill_dest"
+    mkdir -p "$skill_dest" && cp -r "$skill_src/." "$skill_dest/"
+    normalize_skill_name "$skill_dest/SKILL.md" "andrej-karpathy-skills"
+    log_ok "cursor: skill deployed"
   fi
 }
 
@@ -399,6 +473,7 @@ install_tool() {
     gitnexus)      install_gitnexus     ;;
     context7)      install_context7     ;;
     ui-ux-pro-max) install_ui_ux_promax ;;
+    andrej-karpathy-skills) install_andrej_karpathy_skills ;;
     *) echo "❌ Unknown tool: $1"; return 1 ;;
   esac
 }

@@ -10,17 +10,23 @@ Personal agent plugins. One repo, one command.
 | [gitnexus](https://github.com/abhigyanpatwari/GitNexus) | Codebase knowledge graph + MCP server | npm + MCP |
 | [context7](https://github.com/upstash/context7) | Live library docs in context | MCP |
 | [ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | UI/UX design intelligence skill | skill |
+| [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) | Behavioral coding guidelines: think first, keep changes simple and surgical, verify goals | skill |
 
 ## Fresh machine setup
 
 ```bash
-git clone --recurse-submodules https://github.com/agent/agent-ops.git
+git clone https://github.com/agent/agent-ops.git
 cd agent-ops
 bash install.sh
 ```
 
-The `--recurse-submodules` flag clones all 4 plugins in one shot.
-If you forgot it: `git submodule update --init --recursive`
+The installer initializes all plugin submodules automatically.
+
+## Uninstall
+
+```bash
+bash uninstall.sh
+```
 
 ## Update all plugins
 
@@ -37,12 +43,14 @@ Or just re-run `bash install.sh` and answer `y` when asked to pull latest.
 ```
 agent-ops/
 ├── install.sh          # run this
+├── uninstall.sh        # remove installed tools
 ├── .gitmodules         # submodule declarations
 ├── plugins/              # git submodules (external plugins, not committed)
 │   ├── superpowers/
 │   ├── gitnexus/
 │   ├── context7/
-│   └── ui-ux-pro-max/
+│   ├── ui-ux-pro-max/
+│   └── andrej-karpathy-skills/
 ├── skills/             # your own custom skills (committed here)
 ├── mcp/                # any MCP servers you author (committed here)
 └── configs/
