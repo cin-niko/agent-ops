@@ -3,6 +3,8 @@
 
 set -Eeuo pipefail
 
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 AI_PLATFORMS=(claudecode codex cursor)
 SELECTED_PLATFORMS=()
 SELECTED_TOOLS=()
@@ -75,6 +77,19 @@ confirm() {
 }
 
 has_platform() { printf '%s\n' "${SELECTED_PLATFORMS[@]}" | grep -qx "$1"; }
+
+load_custom_skills() {
+  local skills_dir="$REPO_DIR/skills"
+
+  if [[ ! -d "$skills_dir" ]]; then
+    return
+  fi
+
+  local skill_dir
+  while IFS= read -r skill_dir; do
+    TOOLS+=("[custom] $(basename "$skill_dir")")
+  done < <(find "$skills_dir" -mindepth 1 -maxdepth 1 -type d -exec test -f '{}/SKILL.md' ';' -print | sort)
+}
 
 has_all_platforms() {
   local p
@@ -452,6 +467,28 @@ uninstall_andrej_karpathy_skills() {
 }
 
 # =========================
+# custom skills
+# =========================
+
+uninstall_custom_skill() {
+  local skill_name="$1"
+
+  banner "[custom] $skill_name"
+
+  if has_platform claudecode; then
+    remove_path "$HOME/.claude/skills/$skill_name"
+  fi
+
+  if has_platform codex; then
+    remove_path "$HOME/.codex/skills/$skill_name"
+  fi
+
+  if has_platform cursor; then
+    remove_path "$HOME/.cursor/skills/$skill_name"
+  fi
+}
+
+# =========================
 # Dispatcher
 # =========================
 
@@ -462,6 +499,7 @@ uninstall_tool() {
     context7)      uninstall_context7     ;;
     ui-ux-pro-max) uninstall_ui_ux_promax ;;
     andrej-karpathy-skills) uninstall_andrej_karpathy_skills ;;
+    "[custom] "*) uninstall_custom_skill "${1#\[custom\] }" ;;
     *) echo "❌ Unknown tool: $1"; return 1 ;;
   esac
 }
@@ -469,6 +507,8 @@ uninstall_tool() {
 # =========================
 # Main
 # =========================
+
+load_custom_skills
 
 banner "niko-ops uninstaller"
 

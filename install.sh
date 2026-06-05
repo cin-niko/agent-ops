@@ -89,6 +89,19 @@ confirm() {
 
 has_platform() { printf '%s\n' "${SELECTED_PLATFORMS[@]}" | grep -qx "$1"; }
 
+load_custom_skills() {
+  local skills_dir="$REPO_DIR/skills"
+
+  if [[ ! -d "$skills_dir" ]]; then
+    return
+  fi
+
+  local skill_dir
+  while IFS= read -r skill_dir; do
+    TOOLS+=("[custom] $(basename "$skill_dir")")
+  done < <(find "$skills_dir" -mindepth 1 -maxdepth 1 -type d -exec test -f '{}/SKILL.md' ';' -print | sort)
+}
+
 normalize_skill_name() {
   local skill_file="$1"
   local skill_name="$2"
@@ -215,6 +228,15 @@ deploy_submodule() {
     cp -r "$src" "$dest"
   fi
   log_ok "Deployed → $dest"
+}
+
+deploy_custom_skill() {
+  local label="$1" src="$2" dest="$3" platform="$4"
+
+  log_do "$platform: copying $label to $dest"
+  mkdir -p "$dest"
+  cp -r "$src/." "$dest/"
+  log_ok "$platform: $label deployed"
 }
 
 # =========================
@@ -464,6 +486,35 @@ install_andrej_karpathy_skills() {
 }
 
 # =========================
+# custom skills
+# =========================
+
+install_custom_skill() {
+  local skill_name="$1"
+  local skill_src="$REPO_DIR/skills/$skill_name"
+  local label="[Custom] $skill_name"
+
+  banner "[custom] $skill_name"
+
+  if [[ ! -f "$skill_src/SKILL.md" ]]; then
+    log_warn "Source not found at $skill_src/SKILL.md"
+    return 1
+  fi
+
+  if has_platform claudecode; then
+    deploy_custom_skill "$label" "$skill_src" "$HOME/.claude/skills/$skill_name" "claudecode"
+  fi
+
+  if has_platform codex; then
+    deploy_custom_skill "$label" "$skill_src" "$HOME/.codex/skills/$skill_name" "codex"
+  fi
+
+  if has_platform cursor; then
+    deploy_custom_skill "$label" "$skill_src" "$HOME/.cursor/skills/$skill_name" "cursor"
+  fi
+}
+
+# =========================
 # Dispatcher
 # =========================
 
@@ -474,6 +525,7 @@ install_tool() {
     context7)      install_context7     ;;
     ui-ux-pro-max) install_ui_ux_promax ;;
     andrej-karpathy-skills) install_andrej_karpathy_skills ;;
+    "[custom] "*) install_custom_skill "${1#\[custom\] }" ;;
     *) echo "❌ Unknown tool: $1"; return 1 ;;
   esac
 }
@@ -481,6 +533,8 @@ install_tool() {
 # =========================
 # Main
 # =========================
+
+load_custom_skills
 
 banner "niko-ops installer"
 

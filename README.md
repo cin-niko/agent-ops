@@ -11,6 +11,7 @@ Personal agent plugins. One repo, one command.
 | [context7](https://github.com/upstash/context7) | Live library docs in context | MCP |
 | [ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | UI/UX design intelligence skill | skill |
 | [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) | Behavioral coding guidelines: think first, keep changes simple and surgical, verify goals | skill |
+| [custom] repo skills | Auto-discover each local skill under `skills/*/SKILL.md` and install it to selected platforms | skill |
 
 ## Fresh machine setup
 
@@ -21,6 +22,7 @@ bash install.sh
 ```
 
 The installer initializes all plugin submodules automatically.
+Any custom skills committed under `skills/*/SKILL.md` are discovered automatically by both `install.sh` and `uninstall.sh`.
 
 ## Uninstall
 
